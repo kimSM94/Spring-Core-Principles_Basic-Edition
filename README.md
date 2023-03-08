@@ -11,3 +11,6 @@
 
 3. ENUM값과 비교할 때, String 이어도 == 을 이용한다.
 - equal -> X
+
+4. CTTRL + SHIFT +T 
+- 테스트 클래스 만들기 (자동으로)
