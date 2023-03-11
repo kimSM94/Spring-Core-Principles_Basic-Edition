@@ -15,6 +15,9 @@
 4. CTTRL + SHIFT +T 
 - 테스트 클래스 만들기 (자동으로)
 
+5. 리펙토링
+- CTRL + ALT + M(Extract Method)
+
 #Annotation
 1. @BeforeEach 
 - 테스트 실행 전 무조건 실
