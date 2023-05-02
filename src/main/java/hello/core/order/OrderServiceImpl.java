@@ -11,7 +11,7 @@ public class OrderServiceImpl implements OrderService {
     // DIP를 철저하게 지키고 있음
     private final MemberRepository memberRepository;
 
-    private DiscountPolicy discountPolicy;
+    private final DiscountPolicy discountPolicy;
 
     public OrderServiceImpl(MemberRepository memberRepository, DiscountPolicy discountPolicy) {
         this.memberRepository = memberRepository;
