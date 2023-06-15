@@ -18,6 +18,9 @@
 5. 리펙토링
 - CTRL + ALT + M(Extract Method)
 
+6. iter
+- 배열이 있으면 for문을 자동으로 만들어줌
+
 # Annotation
 1. @BeforeEach 
 - 테스트 실행 전 무조건 실
@@ -98,5 +101,24 @@
 ### 스프링 컨테이너
 1. ApplicationContext는 인터페이스이자 스프링 컨테이너라 한다.
 2. XML 기반으로 만들 수 있고, 어노테이션 기반의 자바 설정 클래스로 만들 수 있다.
-3. 직전에 AppConfig를 사용했던 방식이 어노테이션 기반의 자바 설정 클래스로 스프링 컨테이너를 만든 것이다.
+3. 직전에 AppConfig를 사용했던 방식이 어노테이션 기반의 자바 설정 클래스로 스프링 컨테이너를 만든 것이다. 
    * 참고로 스프링 컨테이너는 'BeanFactory', 'AppliactionContext'로 구분해서 이야기한다. 'BeanFactory'를 사용하는 경우는 거의 없으므로 일반적으로 'APpliactionContext'를 스프링 컨테이너라 한다.
+  
+1. 생성
+2) 1) new AnnotaionConfigApplicationContext(Appconfig.class)
+   2) 스프링 컨테이너를 생성할 떄는 구성 정보를 지정해주어야 한다.
+   3) 여기서는 'Appconfig.class'를 구성 정보로 지정
+
+2. 스프링 빈 등
+1. Role ROLE_APPLICATION : 직접 등록한 애플리케이션 빈
+2. Role ROLE_INFRASTRUCTURE : 스프링이 내붕에서 사용하는 빈
+3. ac.getBeanDefinition : 스프링에 등록된 모든 빈 이름을 조회
+4. ac.getBean() : 빈이름으로 빈 객체(인스턴스)를 조회
+- ac.getBean(빈이름,타입)
+- ac.getBean(타입)
+  > 조회 대상 스프링 빈이 없으면 예외 발생 'NoSuchBeanDefinitionException: No bean named 'xxx' available
+-   assertThrows(NoSuchBeanDefinitionException.class,
+                () -> ac.getBean("xxxx", MemberService.class));
+    ac.getBean("xxxx", MemberService.class)) 가 없으면 NoSuchBeanDefinitionException 예외처리..
+-> org.junit.jupiter.api.assertThrows 입니다.
+  
