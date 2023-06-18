@@ -121,4 +121,83 @@
                 () -> ac.getBean("xxxx", MemberService.class));
     ac.getBean("xxxx", MemberService.class)) 가 없으면 NoSuchBeanDefinitionException 예외처리..
 -> org.junit.jupiter.api.assertThrows 입니다.
+
+### BeanFactory와 ApplicationContext
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/4c48998b-323b-42e4-9f62-73398dd44a54)
+
+1. BeanFactory
+   - 스프링 컨테이너의 최상위 인터페이스
+   - 스프링 빈을 관리하고 조회
+   - getBean()을 제공
+     
+2. ApplicationContext
+   - BeanFactory 기능을 모두 상속받아서 제공
   
+     
+     ![image](https://github.com/kimSM94/Spring/assets/82505269/e192b5cf-7b0c-4baa-b1fb-3bb8675bc49d)
+
+1) 메시지소스를 활용한 국제화 기능
+- EX) 한국이면 한국어로, 외국이면 외국어로
+
+2) 환경변수
+- 로컬, 개발, 운영 등을 구분해서 관리
+
+3) 애플리케이션 이벤트
+- 이벤트를 발행하고 구독하는 모델을 편리하게 지원
+
+4) 편리한 리소스 조회
+ - File, ClassPath, 외부 등에서 리소스를 편리하게 조회
+
+정리
+- ApplicationContext는 BeanFactory의 기능을 상속
+- ApplicationContext는 빈 관리기능 + 편리한 부가기능 제공
+- BeanFactory를 직접 사용할일이 없기에 ApplicationContext를 사용
+- BeanFactory나 ApplicationContext를 스프링 컨테이너라 한다.
+  
+### 다양한 설정 혁식 지우너 - 자바 코드, XML
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/0210c01b-3372-4a60-b272-6ced7d6406a8)
+
+1. 어노테이션 기반 자바 코드 설정 사용
+- new AnnotationConfigAppliactionContext(AppConfig.class)
+- AnnotationConfigAppliactionContext 클래스를 사용하면서 자바 코드로된 설정 정보를 넘기면 된다.
+
+2. XMl 설정 사용
+- 최근에 스프링 부트를 사용하면서 XM기반의 설정은 잘 사용하지 않으나, 아직 많은 레거시 프로젝트들이 XML로 되어 있고, 또 XML을 사용하면 컴파일 없이 빈 설정 정보를 변경할 수 있는 장점도 있음.
+- 'GenericXmlAppliactionContext'를 사용하면서 'xml' 설정 파일을 넘기면 된다.
+- xml기반의 appConfig.xml 스프링 설정 정보와 자바 코드로 된 'AppConfig.java' 설정 정보를 비교하면 거의 비슷
+
+
+### 스프링 빈 설정 메타 정보 - BeanDefinition
+- 다양한 설정 형식 지원 -> BeanDefinition
+  -> 쉽게 말해 '역할과 구현을 개념적으로 나눈 것'
+  - Xml을 읽어서 BeanDefinition을 만들면 된다.
+  - 잡마 코드를 읽어서 BeanDefinition를 만들면 된다.
+  - 스프링 컨테이너는 자바 코드인지, XML인지 몰라도 된다. 오직 BeanDefinition만 알며 된다.
+- 'BeanDefinition'을 빈 설정 메타정보라 한다.
+@Bean, <bean> 당 각각 하나씩 메타 정보가 생성
+- 스프링 컨테이너는 이 메타정보를 기반으로 스프링 빈을 생성한다.
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/e56c4abd-6033-4511-8794-c4cc40a711d7)
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/7518eb22-cf2e-4740-8e31-80426be259c5)
+
+- 'AnnotaionConfigAppliactionContext'는 'AnnotationBeanDefinitionReader'를 사용해 'AppConfig.class'를 읽고 'BeanDefiniton'을 생성
+- 'GenericXmlAppliactionContext'는 'XmlBeanDefinitonReader'를 사용해서 'appConfig.xml' 설정 정보를 읽고 'BeanDefinition'을 생성
+- 새로운 형식의 설정 정보가 추가되면,XxxBeanDefinitionReader를 만들어서 'BeanDefinition'을 생성하면 된다.
+
+BeanDefiniton 정보
+1. BeanClassName : 생성할 빈의 클래스명
+2. factoryBeanName : 팩토리 역할의 빈을 사용할 경우, 예)appConfig
+3. factoryMethodName : 빈을 생성할 팩토리 메서드 지정, 예) memberService
+4. Scope : 싱글톤(기본값)
+5. lazyInit : 스프링 컨테이너를 생성할 때 빈을 생성하는 것이 아니라, 실제 빈을 사용할 떄까지 최대한 생성을 지연처리 하는 여부
+6. InitMethodName : 빈을 생성하고, 의존관계를 적용한 뒤에 호출되는 초기화 메서드 명
+7. DestoryMethodName : 빈의 생명주기가 끝나서 제거하기 직전에 호출되는 메서드 명
+8. Constructor arguements, Properties : 의존관계 주입해서 사용한다.(자바 설정처럼 팩토리 역할의 빈을 사용하면 없음)
+
+
+** 정리
+1. BeanDefinition을 직접 생성해서 스프링 컨테이너에 등록할 수도 있다. 하지만 실무에서 거의 사용 X
+2. 너무 깊게 이해하기 보다, BeanDefintion으로 추상화해서 사용하는 것 정도로만 이
