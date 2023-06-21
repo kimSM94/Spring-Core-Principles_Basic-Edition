@@ -11,7 +11,7 @@ public class MemberApp {
 
     public static void main(String[] args) {
 
-//        AppConfig appConfig = new AppConfig();
+//         appConfig = new AppConfig();
 //        MemberService memberService = appConfig.memberService();
 
         // ApplicationContext: @Bean같은걸 관리해줌 스프링 컨테이너라고 보면 됨
