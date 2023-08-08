@@ -1,4 +1,4 @@
-# Spring
+![image](https://github.com/kimSM94/Spring/assets/82505269/f474d60c-c7b7-450a-baf8-a731e69b6e2f)![image](https://github.com/kimSM94/Spring/assets/82505269/0feb3e65-f3ba-4414-8612-182c3c943c2c)# Spring
 스프링핵심 기본원리
 
 <h3> 단축키 정리 </h3>
@@ -245,3 +245,71 @@ bean = class hello.core.AppConfig$$EnhancerBySpringCGLIB$$f165934
 Q) @Configuration 을 적용하지 않고 @Bean만 적용하면 ?
 Configuration을 붙이면, 바이트코드를 조작하는 CGLIB 기술을 사용해 싱글톤을 보장하지만, 싱글톤을 보장 하지 않음(직접 호출할때)
 -> 고민하지 말고 스프링 설정 정보에는 항상 넣자 ~_~
+
+
+### 컴포넌트 스캔과 의존관계 자동 주입 시작하기.
+- 지금까지는 @bean을 통해 직접 등록했찌만, 스프링에서 제공하는 자동으로 스프링 빈을 등록하는 컴포너는 스캔을 기능을 이용하자.
+- AutoAppConfig.java
+![image](https://github.com/kimSM94/Spring/assets/82505269/0daa6541-aea1-48b3-b702-a363ec8e1a60)
+
+참고 : 컴포넌트 스캔을 사용하연 @Configuration이 붙은 설정정보도 자동으로 등록되니, excludeFilters를 이용해 제외시켰음(보통 설정 정보를 컴포넌트 스캔 대상에서 제외하지는 않지만, 기존 예제 코드를 최대한 남기고 유지하기 위해서 이 방법을 선택했다.)
+
+- 컴포넌트 스캔은 이름 그대로 @Component 애노테이션이 붙은 클래스를 스캔해서 스프링 빈으로 등
+- @ComponentScan은 @Component가 붙은 모든 클래스를 스프링 빈으로 등록하는데 스프링 빈의 기본 이름은 클래스명을 사용하되, 맨 앞글자만 소문자로 사용 MemberServiceImpl -> memberServiceImpl
+-> 즉 직접 등록해주고 싶음 @Component("memberServiceImpl");
+
+
+### 탐색 위치와 기본 스캔 대상
+- 모든 자바 클래스를 다 컴포넌트로 스캔하면 시간이 오래걸리기에 시작 위치를 지정 할 수 이씅ㅁ
+1. basePackages : 탐색할 패키지의 시작 위치를 지정
+2. basePackageClasses : 지정한 클래스의 패키지를 탐색 시작 위로 지정 (만약 지정하지 않으면 @ComponentScan이 붙은 설정 정보 클래스의 패키지가 시작 위치가 됨.
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/b8a728cb-cc94-4e4e-a190-96dc3f37c755)
+
+
+## 권장하는 방법
+- 패키지 위치를 지정하지 않고, 설정 정보 클래스의 위치를 프로젝트 최상단에 두는 것(프로젝트 시작 루트 위치에 두는 것)
+- 참고로 스프링 부트를 사용하면, 스프링 부트의 대표 시장 정보인 @SpringBootAppliaction를 이 프로젝트 시작 루트 위치에 두는 것이 관례
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/a5b8b44a-ce78-454e-a9d2-f9423bdfaf86)
+
+## 컴포넌트 스캔 기본 대상
+1. @Component : 컴포넌트 스캔에서 사용
+2. @Controller : 스프링 MVC 컨트롤러에서 사용
+3. @Service : 스프링 비즈니스 로직에서 사용
+4. @Repository : 스프링 데이터 접근 계층에서 사용
+5. @Configuration : 스프링 설정 정보에서 사용
+
+- 참고 : 사실 애노테이션에는 상속관계라는 것이 없음.(스프링이 지원하는기능)
+
+### 필터
+1. includeFilters : 컴포넌트 스캔 대상을 추가로 지정
+2. excludeFilters : 컴포넌트 스캔에서 제외할 대상을 지정
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/6163bf0b-d408-4f31-893a-d45d1688b416)
+
+BeanA는 등록됐지만, BeanB는 등록되지 않음.
+
+## FilterType 옵션
+1. Annotatiton : 기본값,애노테이션을 인식해 동작
+
+   ![image](https://github.com/kimSM94/Spring/assets/82505269/db7c81b2-c797-46f2-a2bb-a9e15b4a4040)
+-> 이런식으로 생략 가능
+   
+2. ASSIGNABLE_TYPE : 지정한 타입과 자식 타입을 인식해 동작
+3. ASPECTJ : Aspectj 패턴 사용 ex) 'org.example..*<Service+'
+4. REGEX : 정규 표현식
+5. CUSTOM : 'TypeFilter'이라는 인터페이스를 구현해서 처리
+
+### 중복 등록과 충돌
+
+1. 자동 빈 등록 vs 자동 빈 등록
+- 이름이 같은 경우 스프링은 오류 발생(ConflictingBeanDefinitionException이 발생)
+
+2. 수동 빈 등록 vs 자동 빈 등록
+- 수동 빈 등록이 우선권을 가져 자동빈을 오버라이딩해버림
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/031284b0-a30d-41c8-8e8a-667554f444d4)
+
+- 스프링 부트인 'CoreAppliaction'을 실행해보면 오류를 볼 수 있음..
+
