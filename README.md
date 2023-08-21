@@ -1,4 +1,3 @@
-![image](https://github.com/kimSM94/Spring/assets/82505269/f474d60c-c7b7-450a-baf8-a731e69b6e2f)![image](https://github.com/kimSM94/Spring/assets/82505269/0feb3e65-f3ba-4414-8612-182c3c943c2c)# Spring
 스프링핵심 기본원리
 
 <h3> 단축키 정리 </h3>
@@ -313,3 +312,35 @@ BeanA는 등록됐지만, BeanB는 등록되지 않음.
 
 - 스프링 부트인 'CoreAppliaction'을 실행해보면 오류를 볼 수 있음..
 
+
+### 다양한 의존관계 주입 방법
+1. 생성자 주입
+- 생성자 호출시점에 딱 1번만 호출되는 것이 보장
+- '불변,필수' 의존관계에 사용
+- 
+- ![image](https://github.com/kimSM94/Spring/assets/82505269/851702ed-7489-4edb-a2b2-249e5f25ce74)
+
+※ 스피링 빈에서, 중요 생성자가 딱 1개만 있으면 @AutoWwired를 생략해도 자동 두입 된다.
+
+   ![image](https://github.com/kimSM94/Spring/assets/82505269/e4378d4d-d840-4928-82ee-4fddb502bad4)
+
+2. 수정자 주입(setter 주입)
+- '선택,변경' 가능성이 있는 의존 관계에 사용
+- 자바빈 프로퍼티 규약의 수정자 메서드 방식을 사용하는 방법이다.
+
+![image](https://github.com/kimSM94/Spring/assets/82505269/8eb55bc0-58b3-4250-a25e-cad22114f63d)
+
+3. 필드주입
+- 코드가 간결하지만 외부에서 변경이 불가능해 테스트하기 어려운 치명적인 단점
+- DI 프레임워크가 없으면 아무것도 할수 없다.
+- 사용하지말자...
+   - 애플리케이션의 실제 코드와 관계 없는 테스트 코드
+   - 스프링 설정을 목적으로 하는 @Configuration 같은 곳에서만 특별한 용도로 사용
+     
+   ![image](https://github.com/kimSM94/Spring/assets/82505269/b54ee4d1-1685-41f6-914d-79c5eb1894ed)
+
+4. 일반메서드 주입
+- 아무메서드에다가 AutoWired를 적용해 사용 ... 그러나 사용하지 않음..
+![image](https://github.com/kimSM94/Spring/assets/82505269/a4105e8c-9f05-48fd-92ee-519c7c3b1f4d)
+
+- 이처럼 의존관계 자동 주입은 스프링 컨테이너가 관리하는 스프링 빈이어야 동작한다. 스프링 빈이 아닌 Member 같은 클래스에서 @Autowired 코드를 적용해도 아무기능이 동작하지 않는다.
