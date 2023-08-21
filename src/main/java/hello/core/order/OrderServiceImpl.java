@@ -12,12 +12,18 @@ public class OrderServiceImpl implements OrderService {
 
 
     // DIP를 철저하게 지키고 있음
-    private final MemberRepository memberRepository;
-
-    private final DiscountPolicy discountPolicy;
+     private MemberRepository memberRepository;
+     private DiscountPolicy discountPolicy;
 
     @Autowired
     public OrderServiceImpl(MemberRepository memberRepository, DiscountPolicy discountPolicy) {
+        this.memberRepository = memberRepository;
+        this.discountPolicy = discountPolicy;
+    }
+
+    // 일반메서드 주입
+    @Autowired
+    public void init(MemberRepository memberRepository, DiscountPolicy discountPolicy) {
         this.memberRepository = memberRepository;
         this.discountPolicy = discountPolicy;
     }
