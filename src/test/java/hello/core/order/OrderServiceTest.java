@@ -22,7 +22,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    void createOrdere(){
+    void createOrder(){
         Long memberId = 1L;
         Member member = new Member(memberId, "memberA", Grade.VIP);
         memberService.join(member);
@@ -31,4 +31,7 @@ public class OrderServiceTest {
 
         Assertions.assertThat(order.getDisCountPrice()).isEqualTo(1000);
     }
+
+
+
 }
