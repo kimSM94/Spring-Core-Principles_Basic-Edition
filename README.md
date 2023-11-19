@@ -17,10 +17,15 @@
 5. 리펙토링
 - CTRL + ALT + M(Extract Method)
 
+
 6. iter
 - 배열이 있으면 for문을 자동으로 만들어줌
 7. isSameAs
 - 인스턴스 비교할 
+
+8. 구현체로 바로 이동
+- CTRL + ALT + B
+
 # Annotation
 1. @BeforeEach 
 - 테스트 실행 전 무조건 실
@@ -366,7 +371,76 @@ BeanA는 등록됐지만, BeanB는 등록되지 않음.
 
 * 컴파일 오류가 세상에서 가장 빠르고, 좋은 오류임.!
 
+
 ##### 정리
 1. 생성자 주입 방식을 선택하는 이유는 여러가지가 있지만, 프레임워크에 의존하지 않고, 순수한 자바 언어의 특징을 잘 살리는 방법
 2. 기본으로 생성자 주입을 사용하고, 필수 값이 아닌 경우에는 수정자 주입 방식으로 옵션으로 부여하면 된다. 생성자 주입과 수정자 주입을 동시에 사용할 수 있다.
 3. 항상 생성자 주입을 선택해라! 그리고 가금 옵션이 필요하면 수정자 주입을 선택해라. 필드 주입은 사용하지 않는게 좋다.
+
+### @Autowired 필드 명, @Quilifier, @Primary
+
+1. @Autowired 는 타입 매칭을 시도하고, 이때 여러 빈이 있으면 필드 이름, 파라미터 이름으로 빈 이름을 추가 매칭한다.
+   
+@Autowired 매칭 정리
+1) 타입 매칭
+2) 타입 매칭의 결과가 2개 이상일 때 필드 명, 파라미터 명으로 빈 이름 매칭
+
+@Qualifier 사용
+@Qualifier 는 추가 구분자를 붙여주는 방법이다. 주입시 추가적인 방법을 제공하는 것이지 빈 이름을 변경하는 것
+은 아니다.
+
+생성자 자동 주입 예시 
+
+``` 
+@Autowired
+public OrderServiceImpl(MemberRepository memberRepository,
+ @Qualifier("mainDiscountPolicy") DiscountPolicy
+discountPolicy) {
+ this.memberRepository = memberRepository;
+ this.discountPolicy = discountPolicy;
+}
+```
+
+수정자 자동 주입 예시 
+
+``` 
+@Autowired
+public DiscountPolicy setDiscountPolicy(@Qualifier("mainDiscountPolicy") 
+DiscountPolicy discountPolicy) {
+ this.discountPolicy = discountPolicy
+}
+```
+
+@Qualifier 로 주입할 때 @Qualifier("mainDiscountPolicy") 를 못찾으면 어떻게 될까? 그러면 
+mainDiscountPolicy라는 이름의 스프링 빈을 추가로 찾는다. 하지만 경험상 @Qualifier 는 @Qualifier 를 찾
+는 용도로만 사용하는게 명확하고 좋다
+
+@Qualifier 정리
+1. @Qualifier끼리 매칭
+2. 빈 이름 매칭
+3. NoSuchBeanDefinitionException 예외 발생
+
+
+@Primary 사용
+@Primary 는 우선순위를 정하는 방법이다. @Autowired 시에 여러 빈이 매칭되면 @Primary 가 우선권을 가진다
+
+```
+@Component
+@Primary
+public class RateDiscountPolicy implements DiscountPolicy {}
+```
+
+Primary, Qualifier 비교
+메인 데이터베이스의 커넥션을 획득하는 스프링 빈은 @Primary 를 적용해서 조회하는 곳에서 @Qualifier 지정 없이 편리하게 조회하고, 서브 데이터베 이스 커넥션 빈을 획득할 때는 @Qualifier 를 지정해서 명시적으로 획득 하는 방식으로 사용하면 코드를 깔끔하게 유지할 수 있다. 
+
+물론 이때 메인 데이터베이스의 스프링 빈을 등록할 때 @Qualifier 를 지정해주는 것은 상관없다.
+
+우선순위는 @Primary 는 기본값 처럼 동작하는 것이고, @Qualifier 는 매우 상세하게 동작한다. 
+
+스프링은 자동보다는 수동이, 넒은 범위의 선택권 보다는 좁은 범위의 선택권이 우선 순위가 높기 @Qualifier 가 우선권이 높다
+
+
+### 애노테이션 직접 만들기
+
+@Annotation에는 상속이라는 개념이 없다. 이렇게 여러 애노테이션을 모아서 사용하는 기능은 스프링이 지원해주는 기능이다.
+@Qualifier 뿐만 아니라 다른 애노테이션들도 함께 조합해서 사용할 수 있다. 단적으로 @Autowired 도 재정의 할 수 있다. 물론 스프링이 제공하는 기능을 뚜렷한 목적 없이 무분별하게 재정의 하는 것은 유지보수에 더 혼란만 가중할 수 있다
