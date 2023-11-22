@@ -1,13 +1,16 @@
 package hello.core.scope;
 
-import org.assertj.core.api.Assertions;
+
+
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Scope;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -15,20 +18,20 @@ public class SingletonWithPrototypeTest1 {
 
     @Test
     void prototypeFind() {
-        AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(Prototypebean.class);
-        Prototypebean prototypebean1 = ac.getBean(Prototypebean.class);
-        prototypebean1.addCount();
-        assertThat(prototypebean1.getCount()).isEqualTo(1);
+        AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(PrototypeBean.class);
+        PrototypeBean prototypeBean1 = ac.getBean(PrototypeBean.class);
+        prototypeBean1.addCount();
+        assertThat(prototypeBean1.getCount()).isEqualTo(1);
 
-        Prototypebean prototypebean2 = ac.getBean(Prototypebean.class);
-        prototypebean2.addCount();
-        assertThat(prototypebean2.getCount()).isEqualTo(1);
+        PrototypeBean prototypeBean2 = ac.getBean(PrototypeBean.class);
+        prototypeBean2.addCount();
+        assertThat(prototypeBean2.getCount()).isEqualTo(1);
 
     }
 
     @Test
     void singletonClientUsePrototype(){
-        AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(ClientBean.class, Prototypebean.class);
+        AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(ClientBean.class, PrototypeBean.class);
 
 
         ClientBean clientBean1 = ac.getBean(ClientBean.class);
@@ -38,23 +41,19 @@ public class SingletonWithPrototypeTest1 {
 
         ClientBean clientBean2 = ac.getBean(ClientBean.class);
         int count2 = clientBean2.logic();
-        assertThat(count2).isEqualTo(2);
+        assertThat(count2).isEqualTo(1);
     }
 
     @Scope("singleton")
     static class ClientBean {
-        private final Prototypebean prototypebean; // 생성시점에 주입
-
-
 
         @Autowired
-        public ClientBean(Prototypebean prototypebean) {
-            this.prototypebean = prototypebean;
-        }
+        private Provider<PrototypeBean> prototypeBeanProvider;
 
         public int logic(){
-            prototypebean.addCount();
-            return prototypebean.getCount();
+            PrototypeBean prototypeBean = prototypeBeanProvider.get();
+            prototypeBean.addCount();
+            return prototypeBean.getCount();
         }
 
     }
@@ -62,7 +61,7 @@ public class SingletonWithPrototypeTest1 {
 
 
     @Scope("prototype")
-    static class Prototypebean{
+    static class PrototypeBean{
         private int count = 0;
 
         public void addCount(){
