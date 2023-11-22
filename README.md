@@ -26,6 +26,22 @@
 8. 구현체로 바로 이동
 - CTRL + ALT + B
 
+9. 하나로 합치는거
+- CRTRL + ALT + N
+
+```
+  int count = prototypebean.getCount();
+            return count;
+하면
+
+ return prototypebean.getCount();
+으로 변경                
+
+
+
+```
+  
+
 # Annotation
 1. @BeforeEach 
 - 테스트 실행 전 무조건 실
@@ -573,3 +589,346 @@ Q) 그런데 개발자가 의존관계 주입이 모두 완료된 시점을 어�
 내가 코드를 고칠 수 없는 외부 라이브러리에 적용할 수 없다
 
 <b>참고: 인터페이스를 사용하는 초기화, 종료 방법은 스프링 초창기에 나온 방법들이고, 지금은 다음의 더 나은 방법들이 있어서 거의 사용하지 않는다.</b>
+
+
+빈 등록 초기화, 소멸 메서드 지정
+설정 정보에 @Bean(initMethod = "init", destroyMethod = "close") 처럼 초기화, 소멸 메서드를 지
+정할 수 있다.
+설정 정보를 사용하도록 변경
+
+```
+package hello.core.lifecycle;
+public class NetworkClient {
+ private String url;
+ public NetworkClient() {
+ System.out.println("생성자 호출, url = " + url);
+ }
+ public void setUrl(String url) {
+ this.url = url;
+ }
+ //서비스 시작시 호출
+ public void connect() {
+ System.out.println("connect: " + url);
+ }
+ public void call(String message) {
+ System.out.println("call: " + url + " message = " + message);
+ }
+ //서비스 종료시 호출
+ public void disConnect() {
+ System.out.println("close + " + url);
+ }
+ public void init() {
+ System.out.println("NetworkClient.init");
+ connect();
+ call("초기화 연결 메시지");
+ }
+ public void close() {
+ System.out.println("NetworkClient.close");
+ disConnect();
+ }
+}
+```
+
+설정 정보에 초기화 소멸 메서드 지정
+
+※ 설정 정보 사용 특징
+1. 메서드 이름을 자유롭게 줄 수 있다.
+2. 스프링 빈이 스프링 코드에 의존하지 않는다.
+3. 코드가 아니라 설정 정보를 사용하기 때문에 코드를 고칠 수 없는 외부 라이브러리에도 초기화, 종료 메서드를 적용할 수 있다.
+
+※ 종료 메서드 추론
+1. @Bean의 destroyMethod 속성에는 아주 특별한 기능이 있다.
+2. 라이브러리는 대부분 close , shutdown 이라는 이름의 종료 메서드를 사용한다. 
+3. @Bean의 destroyMethod 는 기본값이 (inferred) (추론)으로 등록되어 있다.
+이 추론 기능은 close , shutdown 라는 이름의 메서드를 자동으로 호출해준다. 이름 그대로 종료 메서드를 추론해서 호출해준다.
+
+따라서 직접 스프링 빈으로 등록하면 종료 메서드는 따로 적어주지 않아도 잘 동작한다. 추론 기능을 사용하기 싫으면 destroyMethod="" 처럼 빈 공백을 지정하면 된다.
+
+
+<h2>결론은 <b color = "red">애노테이션 @PostConstruct, @PreDestroy</b>을 사용하면 된다.</h2> 
+
+```
+@PostConstruct
+ public void init() {
+   System.out.println("NetworkClient.init");
+   connect();
+   call("초기화 연결 메시지");
+ }
+
+ @PreDestroy
+ public void close() {
+   System.out.println("NetworkClient.close");
+   disConnect();
+ }
+```
+
+※ @PostConstruct, @PreDestroy 애노테이션 특징
+1. 최신 스프링에서 가장 권장하는 방법이며, 애노테이션 하나만 붙이면 되므로 매우 편리하다.
+2. 패키지를 잘 보면 javax.annotation.PostConstruct 이다. 스프링에 종속적인 기술이 아니라 JSR-250
+라는 자바 표준이다. 따라서 스프링이 아닌 다른 컨테이너에서도 동작한다.
+3. 컴포넌트 스캔과 잘 어울린다.
+4. 유일한 단점은 외부 라이브러리에는 적용하지 못한다는 것이다. 외부 라이브러리를 초기화, 종료 해야 하면 @Bean의 initMethod , destroyMethod기능을 사용하자.
+
+<h2>빈 스코프란</h2>
+지금까지 우리는 스프링 빈이 스프링 컨테이너의 시작과 함께 생성되어서 스프링 컨테이너가 종료될 때 까지 유지된다
+고 학습했다. 이것은 스프링 빈이 기본적으로 싱글톤 스코프로 생성되기 때문이다. 스코프는 번역 그대로 빈이 존재할
+수 있는 범위를 뜻한다.
+
+- 스프링은 다음과 같은 다양한 스코프를 지원한다.
+1. 싱글톤: 기본 스코프, 스프링 컨테이너의 시작과 종료까지 유지되는 가장 넓은 범위의 스코프이다.
+2. 프로토타입: 스프링 컨테이너는 프로토타입 빈의 생성과 의존관계 주입까지만 관여하고 더는 관리하지 않는 매우
+짧은 범위의 스코프이다.
+
+※ 웹 관련 스코프
+1. request: 웹 요청이 들어오고 나갈때 까지 유지되는 스코프이다.<br>
+2. session: 웹 세션이 생성되고 종료될 때 까지 유지되는 스코프이다.  <br>
+3. application: 웹의 서블릿 컨텍스트와 같은 범위로 유지되는 스코프이다. <br>
+
+빈 스코프는 다음과 같이 지정할 수 있다.
+
+컴포넌트 스캔 자동 등록 
+```
+@Scope("prototype")
+@Component
+public class HelloBean {}
+```
+
+수동 등록 
+```
+@Scope("prototype")
+@Bean
+PrototypeBean HelloBean() {
+ return new HelloBean();
+}
+```
+지금까지 싱글톤 스코프를 계속 사용해보았으니, 프로토타입 스코프부터 확인해보자
+
+프로토타입 스코프
+싱글톤 스코프의 빈을 조회하면 스프링 컨테이너는 항상 같은 인스턴스의 스프링 빈을 반환한다. 반면에 프로토타입 스
+코프를 스프링 컨테이너에 조회하면 스프링 컨테이너는 항상 새로운 인스턴스를 생성해서 반환한다.
+
+싱글톤 빈 요청
+
+1. 싱글톤 스코프의 빈을 스프링 컨테이너에 요청한다.
+2. 스프링 컨테이너는 본인이 관리하는 스프링 빈을 반환한다.
+3. 이후에 스프링 컨테이너에 같은 요청이 와도 같은 객체 인스턴스의 스프링 빈을 반환한다.
+
+프로토타입 빈 요청
+
+1. 프로토타입 스코프의 빈을 스프링 컨테이너에 요청한다.
+2. 스프링 컨테이너는 이 시점에 프로토타입 빈을 생성하고, 필요한 의존관계를 주입한다.
+3. 스프링 컨테이너는 생성한 프로토타입 빈을 클라이언트에 반환한다.
+4. 이후에 스프링 컨테이너에 같은 요청이 오면 항상 새로운 프로토타입 빈을 생성해서 반환한다
+
+※ 정리
+여기서 핵심은 스프링 컨테이너는 프로토타입 빈을 생성하고, 의존관계 주입, 초기화까지만 처리한다는 것이다. 클라이
+언트에 빈을 반환하고, 이후 스프링 컨테이너는 생성된 프로토타입 빈을 관리하지 않는다. 프로토타입 빈을 관리할 책임
+은 프로토타입 빈을 받은 클라이언트에 있다. 그래서 @PreDestroy 같은 종료 메서드가 호출되지 않는다.
+
+- 싱글톤 빈은 스프링 컨테이너 생성 시점에 초기화 메서드가 실행 되지만, 프로토타입 스코프의 빈은 스프링 컨테
+이너에서 빈을 조회할 때 생성되고, 초기화 메서드도 실행된다.
+- 프로토타입 빈을 2번 조회했으므로 완전히 다른 스프링 빈이 생성되고, 초기화도 2번 실행된 것을 확인할 수 있
+다.
+싱글톤 빈은 스프링 컨테이너가 관리하기 때문에 스프링 컨테이너가 종료될 때 빈의 종료 메서드가 실행되지만, 
+프로토타입 빈은 스프링 컨테이너가 생성과 의존관계 주입 그리고 초기화 까지만 관여하고, 더는 관리하지 않는
+다.
+ 따라서 프로토타입 빈은 스프링 컨테이너가 종료될 때 @PreDestroy 같은 종료 메서드가 전혀 실행되지 않
+는다.
+
+※ 프로토타입 빈의 특징 정리
+1. 스프링 컨테이너에 요청할 때 마다 새로 생성된다.
+2. 스프링 컨테이너는 프로토타입 빈의 생성과 의존관계 주입 그리고 초기화까지만 관여한다.
+3. 종료 메서드가 호출되지 않는다.
+-> 그래서 프로토타입 빈은 프로토타입 빈을 조회한 클라이언트가 관리해야 한다. 종료 메서드에 대한 호출도 클라이
+언트가 직접 해야한다.
+
+
+<h2>프로토타입 스코프 - 싱글톤 빈과 함께 사용시 문제점</h2>
+스프링 컨테이너에 프로토타입 스코프의 빈을 요청하면 항상 새로운 객체 인스턴스를 생성해서 반환한다. 하지만 싱글
+톤 빈과 함께 사용할 때는 의도한 대로 잘 동작하지 않으므로 주의해야 한다.
+
+프로토타입 빈 직접 요청
+스프링 컨테이너에 프로토타입 빈 직접 요청1
+1. 클라이언트A는 스프링 컨테이너에 프로토타입 빈을 요청한다.
+2. 스프링 컨테이너는 프로토타입 빈을 새로 생성해서 반환(x01)한다. 해당 빈의 count 필드 값은 0이다.
+3. 클라이언트는 조회한 프로토타입 빈에 addCount() 를 호출하면서 count 필드를 +1 한다.
+결과적으로 프로토타입 빈(x01)의 count는 1이 된다.
+
+스프링 컨테이너에 프로토타입 빈 직접 요청2
+1. 클라이언트B는 스프링 컨테이너에 프로토타입 빈을 요청한다.
+2. 스프링 컨테이너는 프로토타입 빈을 새로 생성해서 반환(x02)한다. 해당 빈의 count 필드 값은 0이다.
+3. 클라이언트는 조회한 프로토타입 빈에 addCount() 를 호출하면서 count 필드를 +1 한다.
+결과적으로 프로토타입 빈(x02)의 count는 1이 된다.
+
+코드로 확인 
+```
+public class SingletonWithPrototypeTest1 {
+ @Test
+ void prototypeFind() {
+   AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(PrototypeBean.class);
+   PrototypeBean prototypeBean1 = ac.getBean(PrototypeBean.class);
+   prototypeBean1.addCount();
+  
+   assertThat(prototypeBean1.getCount()).isEqualTo(1);
+   PrototypeBean prototypeBean2 = ac.getBean(PrototypeBean.class);
+   prototypeBean2.addCount();
+  
+   assertThat(prototypeBean2.getCount()).isEqualTo(1);
+  
+ }
+
+ @Scope("prototype")
+ static class PrototypeBean {
+   private int count = 0;
+   public void addCount() {
+   count++;
+ }
+
+ public int getCount() {
+   return count;
+ }
+
+ @PostConstruct
+ public void init() {
+   System.out.println("PrototypeBean.init " + this);
+ }
+
+@PreDestroy
+ public void destroy() {
+   System.out.println("PrototypeBean.destroy");
+ }
+ }
+}
+```
+
+싱글톤 빈에서 프로토타입 빈 사용
+이번에는 clientBean 이라는 싱글톤 빈이 의존관계 주입을 통해서 프로토타입 빈을 주입받아서 사용하는 예를 보자.
+
+- 싱글톤에서 프로토타입 빈 사용1
+clientBean 은 싱글톤이므로, 보통 스프링 컨테이너 생성 시점에 함께 생성되고, 의존관계 주입도 발생한다.
+1. clientBean 은 의존관계 자동 주입을 사용한다. 주입 시점에 스프링 컨테이너에 프로토타입 빈을 요청한다.
+2. 스프링 컨테이너는 프로토타입 빈을 생성해서 clientBean 에 반환한다. 프로토타입 빈의 count 필드 값은 0이다.
+이제 clientBean 은 프로토타입 빈을 내부 필드에 보관한다. (정확히는 참조값을 보관한다.)
+
+- 싱글톤에서 프로토타입 빈 사용2
+클라이언트 A는 clientBean 을 스프링 컨테이너에 요청해서 받는다.싱글톤이므로 항상 같은 clientBean이 반환된다.
+3. 클라이언트 A는 clientBean.logic() 을 호출한다.
+4. clientBean 은 prototypeBean의 addCount() 를 호출해서 프로토타입 빈의 count를 증가한다. count값이 1이 된다.
+
+싱글톤에서 프로토타입 빈 사용3
+클라이언트 B는 clientBean 을 스프링 컨테이너에 요청해서 받는다.싱글톤이므로 항상 같은 clientBean이 반환된다.
+여기서 중요한 점이 있는데, clientBean이 내부에 가지고 있는 프로토타입 빈은 이미 과거에 주입이 끝난 빈이다. 주입 시점에 스프링 컨테이너에 요청해서 프로토타입 빈이 새로 생성이 된 것이지, 사용 할 때마다 새로 생성되
+는 것이 아니다!
+5. 클라이언트 B는 clientBean.logic() 을 호출한다.
+6. clientBean 은 prototypeBean의 addCount() 를 호출해서 프로토타입 빈의 count를 증가한다. 원래 count 값이 1이었으므로 2가 된다.
+
+스프링은 일반적으로 싱글톤 빈을 사용하므로, 싱글톤 빈이 프로토타입 빈을 사용하게 된다. 그런데 싱글톤 빈은 생성
+시점에만 의존관계 주입을 받기 때문에, 프로토타입 빈이 새로 생성되기는 하지만, 싱글톤 빈과 함께 계속 유지되는 것
+이 문제다.
+ 아마 원하는 것이 이런 것은 아닐 것이다. 프로토타입 빈을 주입 시점에만 새로 생성하는게 아니라, 사용할 때 마다 새로생성해서 사용하는 것은 다음 <b>Provider</b>로 문제를 해결할 수 있따.
+
+<h2>프로토타입 스코프 - 싱글톤 빈과 함께 사용시 Provider로 문제 해결</h2>
+
+<h3>ObjectFactory, ObjectProvider</h3>
+
+```
+@Autowired
+private ObjectProvider<PrototypeBean> prototypeBeanProvider;
+public int logic() {
+ PrototypeBean prototypeBean = prototypeBeanProvider.getObject();
+ prototypeBean.addCount();
+ int count = prototypeBean.getCount();
+ return count;
+}
+```
+
+실행해보면 prototypeBeanProvider.getObject() 을 통해서 항상 새로운 프로토타입 빈이 생성되는 것을 확인할 수 있다.<br>
+ObjectProvider 의 getObject() 를 호출하면 내부에서는 스프링 컨테이너를 통해 해당 빈을 찾아서 반환한다. (DL)
+스프링이 제공하는 기능을 사용하지만, 기능이 단순하므로 단위테스트를 만들거나 mock 코드를 만들기는 훨씬
+쉬워진다.<br>
+ ObjectProvider 는 지금 딱 필요한 DL 정도의 기능만 제공한다. <br>
+
+특징
+1. ObjectFactory: 기능이 단순, 별도의 라이브러리 필요 없음, 스프링에 의존
+2. ObjectProvider: ObjectFactory 상속, 옵션, 스트림 처리등 편의 기능이 많고, 별도의 라이브러리 필요 없음, 
+스프링에 의존
+
+※ DL : 의존관계를 외부에서 주입(DI) 받는게 아니라 이렇게 직접 필요한 의존관계를 찾는 것을 Dependency Lookup 
+(DL) 의존관계 조회(탐색)
+
+<h2>JSR-330 Provider</h2>
+- 마지막 방법은 javax.inject.Provider 라는 JSR-330 자바 표준을 사용하는 방법이다.
+- 스프링 부트 3.0은 jakarta.inject.Provider 사용한다.
+-> 이 방법을 사용하려면 다음 라이브러리를 gradle에 추가해야 한다.
+
+※ 스프링부트 3.0 미만
+javax.inject:javax.inject:1 라이브러리를 gradle에 추가해야 한다.
+
+※ 스프링부트 3.0 이상
+jakarta.inject:jakarta.inject-api:2.0.1 라이브러리를 gradle에 추가해야 한다.
+javax.inject.Provider 참고용 코드 - 스프링부트 3.0 미만 
+```java
+package javax.inject;
+public interface Provider<T> {
+ T get();
+}
+```
+
+스프링 부트 3.0은 jakarta.inject.Provider 사용
+```java
+@Autowired
+private Provider<PrototypeBean> provider;
+public int logic() {
+ PrototypeBean prototypeBean = provider.get();
+ prototypeBean.addCount();
+ int count = prototypeBean.getCount();
+ return count;
+}
+```
+
+실행해보면 provider.get() 을 통해서 항상 새로운 프로토타입 빈이 생성되는 것을 확인할 수 있다.
+provider 의 get() 을 호출하면 내부에서는 스프링 컨테이너를 통해 해당 빈을 찾아서 반환한다. (DL)
+자바 표준이고, 기능이 단순하므로 단위테스트를 만들거나 mock 코드를 만들기는 훨씬 쉬워진다.
+Provider 는 지금 딱 필요한 DL 정도의 기능만 제공한다.
+특징
+1. get() 메서드 하나로 기능이 매우 단순하다.
+2. 별도의 라이브러리가 필요하다.
+3. 자바 표준이므로 스프링이 아닌 다른 컨테이너에서도 사용할 수 있다.
+정리
+그러면 프로토타입 빈을 언제 사용할까? 매번 사용할 때 마다 의존관계 주입이 완료된 새로운 객체가 필요하면 사
+용하면 된다.<br>
+
+그런데 실무에서 웹 애플리케이션을 개발해보면, 싱글톤 빈으로 대부분의 문제를 해결할 수 있기 때문에 프로토타입 빈을 직접적으로 사용하는 일은 매우 드물다.
+
+- ObjectProvider , JSR330 Provider 등은 프로토타입 뿐만 아니라 DL이 필요한 경우는 언제든지 사용할수 있다.
+
+※  참고: 스프링이 제공하는 메서드에 @Lookup 애노테이션을 사용하는 방법도 있지만, 이전 방법들로 충분하고, 
+고려해야할 내용도 많아서 생략하겠다.
+
+※ 참고: 실무에서 자바 표준인 JSR-330 Provider를 사용할 것인지, 아니면 스프링이 제공하는 ObjectProvider
+를 사용할 것인지 고민이 될 것이다. 
+ ObjectProvider는 DL을 위한 편의 기능을 많이 제공해주고 스프링 외에 별도의 의존관계 추가가 필요 없기 때문에 편리하다. 만약(정말 그럴일은 거의 없겠지만) 코드를 스프링이 아닌 다른 컨테이너에서도 사용할 수 있어야 한다면 JSR-330 Provider를 사용해야한다. <br>
+스프링을 사용하다 보면 이 기능 뿐만 아니라 다른 기능들도 자바 표준과 스프링이 제공하는 기능이 겹칠때가 많
+이 있다. 대부분 스프링이 더 다양하고 편리한 기능을 제공해주기 때문에, 특별히 다른 컨테이너를 사용할 일이 없
+다면, 스프링이 제공하는 기능을 사용하면 된다
+
+<h3>웹 스코프</h3>
+지금까지 싱글톤과 프로토타입 스코프를 학습했다. 싱글톤은 스프링 컨테이너의 시작과 끝까지 함께하는 매우 긴 스코
+프이고, 프로토타입은 생성과 의존관계 주입, 그리고 초기화까지만 진행하는 특별한 스코프이다.
+
+1. 웹 스코프의 특징
+- 웹 스코프는 웹 환경에서만 동작한다.
+- 웹 스코프는 프로토타입과 다르게 스프링이 해당 스코프의 종료시점까지 관리한다. 따라서 종료 메서드가 호출된
+다.
+
+2. 웹 스코프 종류
+1) request: HTTP 요청 하나가 들어오고 나갈 때 까지 유지되는 스코프, 각각의 HTTP 요청마다 별도의 빈 인스턴
+스가 생성되고, 관리된다.
+2) session: HTTP Session과 동일한 생명주기를 가지는 스코프
+3) application: 서블릿 컨텍스트( ServletContext )와 동일한 생명주기를 가지는 스코프
+4) websocket: 웹 소켓과 동일한 생명주기를 가지는 스코프
+
+<h3>스코프와 Provider</h3>
+1. ObjectProvider 덕분에 ObjectProvider.getObject() 를 호출하는 시점까지 request scope 빈의생성을 지연할 수 있다.
+2. ObjectProvider.getObject() 를 호출하시는 시점에는 HTTP 요청이 진행중이므로 request scope 빈의 생성이 정상 처리된다.
+3. ObjectProvider.getObject() 를 LogDemoController , LogDemoService 에서 각각 한번씩 따로 호출해도 같은 HTTP 요청이면 같은 스프링 빈이 반환된다!
